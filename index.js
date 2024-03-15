@@ -1,143 +1,161 @@
-const taskForm = document.getElementById ("taskForm");
-const taskInput = document.getElementById ("taskInput");
-const taskList = document.getElementById ("taskList");
+const taskForm = document.getElementById("taskForm");
+const taskInput = document.getElementById("taskInput");
+const taskList = document.getElementById("taskList");
 
-// Event listener for keypress event on taskInput
-// taskForm.addEventListener("submit", function(event) {
-//     // Check if Enter key is pressed (key code 13)
-//     // if (event.key === "Enter") {
-//         addTask(); // Call the addTask function
-//     // }
-// });
-
-// Call the addTask function
+// Event listener for form submission
 taskForm.addEventListener("submit", (e) => {
-    e.preventDefault()
-    addTask()
+    e.preventDefault();
+    addTask();
 });
 
-      var editImages = document.querySelectorAll('.edit_image');
+// Loop through all elements with the class 'edit_image' and make them visible
+document.querySelectorAll('.edit_image').forEach(img => img.classList.remove('hidden'));
 
-      // Loop through all elements with the class 'edit_image' and make them visible
-      editImages.forEach(function(img) {
-          img.classList.remove('hidden');
-      });
+// Retrieve tasks from local storage when the page is loaded
+document.addEventListener("DOMContentLoaded", () => {
+    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    savedTasks.forEach(task => createTaskElement(task.text, task.checked));
+});
 
-const createTaskElement = (taskText) => {
+// Function to create a task element
+const createTaskElement = (taskText, isChecked) => {
     const listItemContainer = document.createElement('div');
-        listItemContainer.classList.add('flex', 'items-center', 'justify-between', 'p-2', 'border-b', 'border-gray-300');
+    listItemContainer.classList.add('flex', 'items-center', 'justify-between', 'p-2', 'border-b', 'border-gray-300');
 
-        // Create a checkbox element
-        const checkbox = document.createElement('input');
-        checkbox.setAttribute('type', 'checkbox');
-        checkbox.classList.add('mr-2'); // Add Tailwind CSS classes to style the checkbox
-        checkbox.addEventListener('change', completeTask); // Add event listener for task completion
+    // Create a checkbox element
+    const checkbox = document.createElement('input');
+    checkbox.setAttribute('type', 'checkbox');
+    checkbox.classList.add('mr-2');
+    checkbox.addEventListener('change', completeTask);
+    checkbox.checked = isChecked; // Set checkbox state based on local storage
 
-        // Append the checkbox to the container div
-        listItemContainer.appendChild(checkbox);        
+    // Append the checkbox to the container div
+    listItemContainer.appendChild(checkbox);
 
-        // Create a span for the text content
-        const textSpan = document.createElement('span');
-        textSpan.textContent = taskText;
+    // Create a span for the text content
+    const textSpan = document.createElement('span');
+    textSpan.textContent = taskText;
+    listItemContainer.appendChild(textSpan);
 
-        // Append the text span to the container div
-        listItemContainer.appendChild(textSpan);
+    // Create a div container for the images
+    const imagesContainer = document.createElement('div');
+    imagesContainer.classList.add('flex', 'items-center');
 
-        // Create a div container for the images
-        const imagesContainer = document.createElement('div');
-        imagesContainer.classList.add('flex', 'items-center'); // Apply flexbox properties to align images horizontally
+    // Create the first image element (edit)
+    const imgEdit = document.createElement('img');
+    imgEdit.src = 'https://cdn.discordapp.com/attachments/1203974616566071357/1217511990415589436/edit.png?ex=66044b66&is=65f1d666&hm=09e04865d49820d254c4dfa3f0199c33ef7a2fe9286b20698df8d98bea4ffbed&';
+    imgEdit.alt = 'Edit';
+    imgEdit.classList.add('h-6', 'w-6', 'cursor-pointer');
+    imgEdit.addEventListener('click', () => editTask(textSpan)); // Pass text span to editTask
 
-        // Create the first image element
-        const img = document.createElement('img');
-        img.src = 'https://cdn.discordapp.com/attachments/1203974616566071357/1217511990415589436/edit.png?ex=66044b66&is=65f1d666&hm=09e04865d49820d254c4dfa3f0199c33ef7a2fe9286b20698df8d98bea4ffbed&'; // Replace 'image.jpg' with the path to your image file
-        img.alt = 'Image'; // Set alt text for accessibility
-        img.classList.add('h-6', 'w-6', 'cursor-pointer'); // Add Tailwind CSS classes to style the image
-        img.id = 'deleteButton'; // Assign id "deleteButton2" to the second image
-        img.addEventListener('click', editTask)
+    // Create the second image element (delete)
+    const imgDelete = document.createElement('img');
+    imgDelete.src = 'https://cdn.discordapp.com/attachments/1203974616566071357/1217511991044739194/trash-bin.png?ex=66044b66&is=65f1d666&hm=356cd607b982ab7025d175c8647a499e9e23da78f390239afded8429932f3c12&';
+    imgDelete.alt = 'Delete';
+    imgDelete.classList.add('h-6', 'w-6', 'ml-2', 'cursor-pointer');
+    imgDelete.addEventListener('click', deleteTask);
 
-        // Create the second image element
-        const img2 = document.createElement('img');
-        img2.src = 'https://cdn.discordapp.com/attachments/1203974616566071357/1217511991044739194/trash-bin.png?ex=66044b66&is=65f1d666&hm=356cd607b982ab7025d175c8647a499e9e23da78f390239afded8429932f3c12&'; // Replace 'image.jpg' with the path to your image file
-        img2.alt = 'Image'; // Set alt text for accessibility
-        img2.classList.add('h-6', 'w-6', 'ml-2', 'cursor-pointer'); // Add Tailwind CSS classes to style the image
-        img2.id = 'deleteButton2'; // Assign id "deleteButton2" to the second image
-        img2.addEventListener('click', deleteTask)
+    // Append both images to the images container
+    imagesContainer.appendChild(imgEdit);
+    imagesContainer.appendChild(imgDelete);
 
-        // Append both images to the images container
-        imagesContainer.appendChild(img);
-        imagesContainer.appendChild(img2);
+    // Append the images container to the container div
+    listItemContainer.appendChild(imagesContainer);
 
-        // Append the images container to the container div
-        listItemContainer.appendChild(imagesContainer);
-
-        // Create a list item
-        const li = document.createElement('li');
-
-        // Append the container div to the list item
-        li.appendChild(listItemContainer);
-
-        // Append the list item to the task list
-        taskList.appendChild(li);
+    // Create a list item
+    const li = document.createElement('li');
+    li.appendChild(listItemContainer);
+    taskList.appendChild(li);
 }
 
- // ADD TASK - 0. FUNCTIONALITY
+// Function to add a task
 function addTask() {
     const taskText = taskInput.value.trim();
     if (taskText !== '') {
-        createTaskElement(taskText)
-
-        taskInput.value = ''; /*make textfield empty again for further use*/
+        const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+        if (!savedTasks.some(task => task.text === taskText)) {
+            createTaskElement(taskText, false); // New task is unchecked by default
+            saveTaskToLocalStorage({ text: taskText, checked: false });
+            taskInput.value = '';
+        } else {
+            alert("This task already exists!");
+        }
     }
 }
 
- // ADD TASK - 0. FUNCTIONALITY
-
-// CHECKBOX - 1. FUNCTIONALITY 
-    function completeTask(event) {
-    const task = event.target;
-    task.parentNode.classList.toggle('line-through');
-}
-// CHECKBOX - 1. FUNCTIONALITY 
-
-
-// EDIT TASK - 2. FUNCTIONALITY
-// Function to handle the click event on the edit image
-function editTask(event) {
-    const task = event.target.closest('li'); // Get the parent li element of the clicked edit image
-    const textSpan = task.querySelector('span'); // Find the span containing the task text
-
-    // Prompt the user for new task text
-    const newText = prompt('Enter new task:');
-    if (newText !== null && newText.trim() !== '') {
-        textSpan.textContent = newText.trim(); // Update the text content with the new text
-    }
+// Function to save a single task to local storage
+function saveTaskToLocalStorage(task) {
+    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    savedTasks.push(task);
+    localStorage.setItem("tasks", JSON.stringify(savedTasks));
 }
 
-// Function to add a clickable edit image to the task item
-function addEditButton(li) {
-    const editImg = document.createElement('img');
-    editImg.src = 'https://cdn.discordapp.com/attachments/1203974616566071357/1217511990415589436/edit.png';
-    editImg.alt = 'Edit';
-    editImg.classList.add('h-6', 'w-6', 'cursor-pointer'); // Add Tailwind CSS classes to style the edit image
-    editImg.addEventListener('click', editTask); // Attach click event listener to the edit image
-    li.querySelector('.edit-image-container').appendChild(editImg); // Append the edit image to the appropriate container
-}
-
-// Modified addTask function
-
-
-// TASK DELETION - 3. FUNCTIONALITY
-
-
-
-
+// Function to delete a task
 function deleteTask(event) {
-    console.log(event.target.parentElement.parentElement)
-    const task = event.target.parentElement.parentElement;
+    const task = event.target.closest('li');
+    const taskText = task.querySelector('span').textContent;
     task.remove();
-    // taskList.removeChild(task);
+    removeTaskFromLocalStorage(taskText);
 }
 
+// Function to remove a task from local storage
+function removeTaskFromLocalStorage(taskText) {
+    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    const updatedTasks = savedTasks.filter(task => task.text !== taskText);
+    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+}
 
+// Function to handle task completion
+function completeTask(event) {
+    const task = event.target;
+    const textSpan = task.nextSibling;
+    task.parentNode.classList.toggle('line-through');
 
+    // Update task status in local storage
+    const taskText = textSpan.textContent;
+    updateTaskStatusInLocalStorage(taskText, task.checked);
+}
 
+// Function to update task status in local storage
+function updateTaskStatusInLocalStorage(taskText, isChecked) {
+    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    const index = savedTasks.findIndex(task => task.text === taskText);
+    if (index !== -1) {
+        savedTasks[index].checked = isChecked;
+        localStorage.setItem("tasks", JSON.stringify(savedTasks));
+    }
+}
+// Retrieve tasks from local storage when the page is loaded
+document.addEventListener("DOMContentLoaded", () => {
+    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    // Clear the taskList before adding tasks
+    taskList.innerHTML = '';
+    savedTasks.forEach(task => {
+        createTaskElement(task.text, task.checked);
+        const listItem = taskList.lastChild;
+        if (task.checked) {
+            listItem.classList.add('line-through');
+        }
+    });
+});
+
+// Function to handle the click event on the edit image
+// Function to handle the click event on the edit image
+function editTask(textSpan) {
+    const oldText = textSpan.textContent;
+    const newText = prompt('Enter new task:', oldText);
+    if (newText !== null && newText.trim() !== '') {
+        textSpan.textContent = newText.trim();
+        updateTaskInLocalStorage(oldText, newText.trim());
+    }
+}
+
+// Function to update task in local storage
+function updateTaskInLocalStorage(oldText, newText) {
+    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    const index = savedTasks.findIndex(task => task.text === oldText);
+    if (index !== -1) {
+        savedTasks[index].text = newText;
+        localStorage.setItem("tasks", JSON.stringify(savedTasks));
+    }
+}
